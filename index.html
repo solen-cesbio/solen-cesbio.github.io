@@ -1,0 +1,2875 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-tilelayer-wmts.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/mean_summer_mean_swi_1.js"></script>
+        <script src="data/mean_sum_temp_0106_3108_2.js"></script>
+        <script src="data/mean_annual_sum_rain_minus_etp_3.js"></script>
+        <script src="data/sable_30_100_mean_4.js"></script>
+        <script src="data/sable_0_30_mean_5.js"></script>
+        <script src="data/ph_30_100_mean_6.js"></script>
+        <script src="data/ph_0_30_mean_7.js"></script>
+        <script src="data/limon_30_100_mean_8.js"></script>
+        <script src="data/limon_0_30_mean_9.js"></script>
+        <script src="data/argile_30_100_mean_10.js"></script>
+        <script src="data/argile_0_30_mean_11.js"></script>
+        <script src="data/northness_mean_12.js"></script>
+        <script src="data/eastness_mean_13.js"></script>
+        <script src="data/alt_mean_14.js"></script>
+        <script src="data/slope_mean_15.js"></script>
+        <script src="data/ilots_polygone_16.js"></script>
+        <script src="data/ilot_grid_modis1km_17.js"></script>
+        <script src="data/ilot_centroides_18.js"></script>
+        <script src="data/grid_MODIS_1km_Armagnac_2154_21.js"></script>
+        <script src="data/Contour_Armagnac_22.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[43.32792803276023,-0.7050660847855172],[44.21575689088018,0.5916604988362021]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    // Aggiorna il popup quando il video carica i metadati
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_EsriImagery_0');
+        map.getPane('pane_EsriImagery_0').style.zIndex = 400;
+        var layer_EsriImagery_0 = L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            pane: 'pane_EsriImagery_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+        });
+        layer_EsriImagery_0;
+        map.addLayer(layer_EsriImagery_0);
+        function pop_mean_summer_mean_swi_1(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_mean_summer_mean_swi_1_0(feature) {
+            if (feature.properties['valeur'] >= 0.253672 && feature.properties['valeur'] <= 0.300000 ) {
+                return {
+                pane: 'pane_mean_summer_mean_swi_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(247,251,255,1.0)',
+                interactive: false,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.300000 && feature.properties['valeur'] <= 0.350000 ) {
+                return {
+                pane: 'pane_mean_summer_mean_swi_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(209,226,243,1.0)',
+                interactive: false,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.350000 && feature.properties['valeur'] <= 0.400000 ) {
+                return {
+                pane: 'pane_mean_summer_mean_swi_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(154,200,224,1.0)',
+                interactive: false,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.400000 && feature.properties['valeur'] <= 0.450000 ) {
+                return {
+                pane: 'pane_mean_summer_mean_swi_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(82,157,204,1.0)',
+                interactive: false,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.450000 && feature.properties['valeur'] <= 0.500000 ) {
+                return {
+                pane: 'pane_mean_summer_mean_swi_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(29,108,177,1.0)',
+                interactive: false,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.500000 && feature.properties['valeur'] <= 0.528449 ) {
+                return {
+                pane: 'pane_mean_summer_mean_swi_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(8,48,107,1.0)',
+                interactive: false,
+            }
+            }
+        }
+        map.createPane('pane_mean_summer_mean_swi_1');
+        map.getPane('pane_mean_summer_mean_swi_1').style.zIndex = 401;
+        map.getPane('pane_mean_summer_mean_swi_1').style['mix-blend-mode'] = 'normal';
+        var layer_mean_summer_mean_swi_1 = new L.geoJson(json_mean_summer_mean_swi_1, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_mean_summer_mean_swi_1',
+            layerName: 'layer_mean_summer_mean_swi_1',
+            pane: 'pane_mean_summer_mean_swi_1',
+            onEachFeature: pop_mean_summer_mean_swi_1,
+            style: style_mean_summer_mean_swi_1_0,
+        });
+        bounds_group.addLayer(layer_mean_summer_mean_swi_1);
+        map.addLayer(layer_mean_summer_mean_swi_1);
+        function pop_mean_sum_temp_0106_3108_2(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_mean_sum_temp_0106_3108_2_0(feature) {
+            if (feature.properties['valeur'] >= 501.156494 && feature.properties['valeur'] <= 505.000000 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,255,255,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 505.000000 && feature.properties['valeur'] <= 510.000000 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,219,219,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 510.000000 && feature.properties['valeur'] <= 515.000000 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,182,182,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 515.000000 && feature.properties['valeur'] <= 520.000000 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,146,146,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 520.000000 && feature.properties['valeur'] <= 525.000000 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,109,109,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 525.000000 && feature.properties['valeur'] <= 530.000000 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,73,73,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 530.000000 && feature.properties['valeur'] <= 535.000000 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,36,36,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 535.000000 && feature.properties['valeur'] <= 537.030457 ) {
+                return {
+                pane: 'pane_mean_sum_temp_0106_3108_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,0,0,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_mean_sum_temp_0106_3108_2');
+        map.getPane('pane_mean_sum_temp_0106_3108_2').style.zIndex = 402;
+        map.getPane('pane_mean_sum_temp_0106_3108_2').style['mix-blend-mode'] = 'normal';
+        var layer_mean_sum_temp_0106_3108_2 = new L.geoJson(json_mean_sum_temp_0106_3108_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_mean_sum_temp_0106_3108_2',
+            layerName: 'layer_mean_sum_temp_0106_3108_2',
+            pane: 'pane_mean_sum_temp_0106_3108_2',
+            onEachFeature: pop_mean_sum_temp_0106_3108_2,
+            style: style_mean_sum_temp_0106_3108_2_0,
+        });
+        bounds_group.addLayer(layer_mean_sum_temp_0106_3108_2);
+        map.addLayer(layer_mean_sum_temp_0106_3108_2);
+        function pop_mean_annual_sum_rain_minus_etp_3(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_mean_annual_sum_rain_minus_etp_3_0(feature) {
+            if (feature.properties['valeur'] >= -77.952171 && feature.properties['valeur'] <= -60.000000 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(202,0,32,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -60.000000 && feature.properties['valeur'] <= -40.000000 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(226,94,88,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -40.000000 && feature.properties['valeur'] <= -20.000000 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(244,177,147,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -20.000000 && feature.properties['valeur'] <= 20.000000 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,255,255,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 20.000000 && feature.properties['valeur'] <= 40.000000 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(218,233,240,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 40.000000 && feature.properties['valeur'] <= 60.000000 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(160,204,226,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 60.000000 && feature.properties['valeur'] <= 80.000000 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(86,161,202,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 80.000000 && feature.properties['valeur'] <= 82.813042 ) {
+                return {
+                pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(5,113,176,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_mean_annual_sum_rain_minus_etp_3');
+        map.getPane('pane_mean_annual_sum_rain_minus_etp_3').style.zIndex = 403;
+        map.getPane('pane_mean_annual_sum_rain_minus_etp_3').style['mix-blend-mode'] = 'normal';
+        var layer_mean_annual_sum_rain_minus_etp_3 = new L.geoJson(json_mean_annual_sum_rain_minus_etp_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_mean_annual_sum_rain_minus_etp_3',
+            layerName: 'layer_mean_annual_sum_rain_minus_etp_3',
+            pane: 'pane_mean_annual_sum_rain_minus_etp_3',
+            onEachFeature: pop_mean_annual_sum_rain_minus_etp_3,
+            style: style_mean_annual_sum_rain_minus_etp_3_0,
+        });
+        bounds_group.addLayer(layer_mean_annual_sum_rain_minus_etp_3);
+        map.addLayer(layer_mean_annual_sum_rain_minus_etp_3);
+        function pop_sable_30_100_mean_4(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_sable_30_100_mean_4_0(feature) {
+            if (feature.properties['valeur'] >= 118.006612 && feature.properties['valeur'] <= 200.000000 ) {
+                return {
+                pane: 'pane_sable_30_100_mean_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,235,226,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 200.000000 && feature.properties['valeur'] <= 300.000000 ) {
+                return {
+                pane: 'pane_sable_30_100_mean_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(252,198,199,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 300.000000 && feature.properties['valeur'] <= 400.000000 ) {
+                return {
+                pane: 'pane_sable_30_100_mean_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(250,155,177,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 400.000000 && feature.properties['valeur'] <= 500.000000 ) {
+                return {
+                pane: 'pane_sable_30_100_mean_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(247,104,161,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 500.000000 && feature.properties['valeur'] <= 600.000000 ) {
+                return {
+                pane: 'pane_sable_30_100_mean_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(214,53,146,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 600.000000 && feature.properties['valeur'] <= 700.000000 ) {
+                return {
+                pane: 'pane_sable_30_100_mean_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(172,18,132,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 700.000000 && feature.properties['valeur'] <= 728.658595 ) {
+                return {
+                pane: 'pane_sable_30_100_mean_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(122,1,119,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_sable_30_100_mean_4');
+        map.getPane('pane_sable_30_100_mean_4').style.zIndex = 404;
+        map.getPane('pane_sable_30_100_mean_4').style['mix-blend-mode'] = 'normal';
+        var layer_sable_30_100_mean_4 = new L.geoJson(json_sable_30_100_mean_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_sable_30_100_mean_4',
+            layerName: 'layer_sable_30_100_mean_4',
+            pane: 'pane_sable_30_100_mean_4',
+            onEachFeature: pop_sable_30_100_mean_4,
+            style: style_sable_30_100_mean_4_0,
+        });
+        bounds_group.addLayer(layer_sable_30_100_mean_4);
+        map.addLayer(layer_sable_30_100_mean_4);
+        function pop_sable_0_30_mean_5(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_sable_0_30_mean_5_0(feature) {
+            if (feature.properties['valeur'] >= 133.150754 && feature.properties['valeur'] <= 200.000000 ) {
+                return {
+                pane: 'pane_sable_0_30_mean_5',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(241,238,246,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 200.000000 && feature.properties['valeur'] <= 400.000000 ) {
+                return {
+                pane: 'pane_sable_0_30_mean_5',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,181,216,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 400.000000 && feature.properties['valeur'] <= 600.000000 ) {
+                return {
+                pane: 'pane_sable_0_30_mean_5',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,101,176,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 600.000000 && feature.properties['valeur'] <= 800.000000 ) {
+                return {
+                pane: 'pane_sable_0_30_mean_5',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,28,119,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 800.000000 && feature.properties['valeur'] <= 880.967053 ) {
+                return {
+                pane: 'pane_sable_0_30_mean_5',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(152,0,67,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_sable_0_30_mean_5');
+        map.getPane('pane_sable_0_30_mean_5').style.zIndex = 405;
+        map.getPane('pane_sable_0_30_mean_5').style['mix-blend-mode'] = 'normal';
+        var layer_sable_0_30_mean_5 = new L.geoJson(json_sable_0_30_mean_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_sable_0_30_mean_5',
+            layerName: 'layer_sable_0_30_mean_5',
+            pane: 'pane_sable_0_30_mean_5',
+            onEachFeature: pop_sable_0_30_mean_5,
+            style: style_sable_0_30_mean_5_0,
+        });
+        bounds_group.addLayer(layer_sable_0_30_mean_5);
+        map.addLayer(layer_sable_0_30_mean_5);
+        function pop_ph_30_100_mean_6(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_ph_30_100_mean_6_0(feature) {
+            if (feature.properties['valeur'] >= 4.900718 && feature.properties['valeur'] <= 5.000000 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(241,238,246,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 5.000000 && feature.properties['valeur'] <= 5.500000 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(226,205,229,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 5.500000 && feature.properties['valeur'] <= 6.000000 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(216,170,210,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 6.000000 && feature.properties['valeur'] <= 6.500000 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,124,187,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 6.500000 && feature.properties['valeur'] <= 7.000000 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(222,80,160,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 7.000000 && feature.properties['valeur'] <= 7.500000 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,38,127,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 7.500000 && feature.properties['valeur'] <= 8.000000 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(191,16,97,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 8.000000 && feature.properties['valeur'] <= 8.367449 ) {
+                return {
+                pane: 'pane_ph_30_100_mean_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(152,0,67,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_ph_30_100_mean_6');
+        map.getPane('pane_ph_30_100_mean_6').style.zIndex = 406;
+        map.getPane('pane_ph_30_100_mean_6').style['mix-blend-mode'] = 'normal';
+        var layer_ph_30_100_mean_6 = new L.geoJson(json_ph_30_100_mean_6, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_ph_30_100_mean_6',
+            layerName: 'layer_ph_30_100_mean_6',
+            pane: 'pane_ph_30_100_mean_6',
+            onEachFeature: pop_ph_30_100_mean_6,
+            style: style_ph_30_100_mean_6_0,
+        });
+        bounds_group.addLayer(layer_ph_30_100_mean_6);
+        map.addLayer(layer_ph_30_100_mean_6);
+        function pop_ph_0_30_mean_7(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_ph_0_30_mean_7_0(feature) {
+            if (feature.properties['valeur'] >= 4.689846 && feature.properties['valeur'] <= 5.000000 ) {
+                return {
+                pane: 'pane_ph_0_30_mean_7',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(241,238,246,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 5.000000 && feature.properties['valeur'] <= 6.000000 ) {
+                return {
+                pane: 'pane_ph_0_30_mean_7',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,181,216,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 6.000000 && feature.properties['valeur'] <= 7.000000 ) {
+                return {
+                pane: 'pane_ph_0_30_mean_7',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,101,176,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 7.000000 && feature.properties['valeur'] <= 8.000000 ) {
+                return {
+                pane: 'pane_ph_0_30_mean_7',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,28,119,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 8.000000 && feature.properties['valeur'] <= 8.237518 ) {
+                return {
+                pane: 'pane_ph_0_30_mean_7',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(152,0,67,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_ph_0_30_mean_7');
+        map.getPane('pane_ph_0_30_mean_7').style.zIndex = 407;
+        map.getPane('pane_ph_0_30_mean_7').style['mix-blend-mode'] = 'normal';
+        var layer_ph_0_30_mean_7 = new L.geoJson(json_ph_0_30_mean_7, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_ph_0_30_mean_7',
+            layerName: 'layer_ph_0_30_mean_7',
+            pane: 'pane_ph_0_30_mean_7',
+            onEachFeature: pop_ph_0_30_mean_7,
+            style: style_ph_0_30_mean_7_0,
+        });
+        bounds_group.addLayer(layer_ph_0_30_mean_7);
+        map.addLayer(layer_ph_0_30_mean_7);
+        function pop_limon_30_100_mean_8(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_limon_30_100_mean_8_0(feature) {
+            if (feature.properties['valeur'] >= 28.714319 && feature.properties['valeur'] <= 100.000000 ) {
+                return {
+                pane: 'pane_limon_30_100_mean_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,235,226,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 100.000000 && feature.properties['valeur'] <= 200.000000 ) {
+                return {
+                pane: 'pane_limon_30_100_mean_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(252,191,193,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 200.000000 && feature.properties['valeur'] <= 300.000000 ) {
+                return {
+                pane: 'pane_limon_30_100_mean_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(249,134,171,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 300.000000 && feature.properties['valeur'] <= 400.000000 ) {
+                return {
+                pane: 'pane_limon_30_100_mean_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,73,152,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 400.000000 && feature.properties['valeur'] <= 500.000000 ) {
+                return {
+                pane: 'pane_limon_30_100_mean_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(182,22,134,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 500.000000 && feature.properties['valeur'] <= 555.567857 ) {
+                return {
+                pane: 'pane_limon_30_100_mean_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(122,1,119,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_limon_30_100_mean_8');
+        map.getPane('pane_limon_30_100_mean_8').style.zIndex = 408;
+        map.getPane('pane_limon_30_100_mean_8').style['mix-blend-mode'] = 'normal';
+        var layer_limon_30_100_mean_8 = new L.geoJson(json_limon_30_100_mean_8, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_limon_30_100_mean_8',
+            layerName: 'layer_limon_30_100_mean_8',
+            pane: 'pane_limon_30_100_mean_8',
+            onEachFeature: pop_limon_30_100_mean_8,
+            style: style_limon_30_100_mean_8_0,
+        });
+        bounds_group.addLayer(layer_limon_30_100_mean_8);
+        map.addLayer(layer_limon_30_100_mean_8);
+        function pop_limon_0_30_mean_9(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_limon_0_30_mean_9_0(feature) {
+            if (feature.properties['valeur'] >= 47.028424 && feature.properties['valeur'] <= 100.000000 ) {
+                return {
+                pane: 'pane_limon_0_30_mean_9',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,235,226,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 100.000000 && feature.properties['valeur'] <= 200.000000 ) {
+                return {
+                pane: 'pane_limon_0_30_mean_9',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(252,191,193,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 200.000000 && feature.properties['valeur'] <= 300.000000 ) {
+                return {
+                pane: 'pane_limon_0_30_mean_9',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(249,134,171,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 300.000000 && feature.properties['valeur'] <= 400.000000 ) {
+                return {
+                pane: 'pane_limon_0_30_mean_9',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,73,152,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 400.000000 && feature.properties['valeur'] <= 500.000000 ) {
+                return {
+                pane: 'pane_limon_0_30_mean_9',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(182,22,134,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 500.000000 && feature.properties['valeur'] <= 597.634683 ) {
+                return {
+                pane: 'pane_limon_0_30_mean_9',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(122,1,119,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_limon_0_30_mean_9');
+        map.getPane('pane_limon_0_30_mean_9').style.zIndex = 409;
+        map.getPane('pane_limon_0_30_mean_9').style['mix-blend-mode'] = 'normal';
+        var layer_limon_0_30_mean_9 = new L.geoJson(json_limon_0_30_mean_9, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_limon_0_30_mean_9',
+            layerName: 'layer_limon_0_30_mean_9',
+            pane: 'pane_limon_0_30_mean_9',
+            onEachFeature: pop_limon_0_30_mean_9,
+            style: style_limon_0_30_mean_9_0,
+        });
+        bounds_group.addLayer(layer_limon_0_30_mean_9);
+        map.addLayer(layer_limon_0_30_mean_9);
+        function pop_argile_30_100_mean_10(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_argile_30_100_mean_10_0(feature) {
+            if (feature.properties['valeur'] >= 33.987689 && feature.properties['valeur'] <= 100.000000 ) {
+                return {
+                pane: 'pane_argile_30_100_mean_10',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(241,238,246,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 100.000000 && feature.properties['valeur'] <= 200.000000 ) {
+                return {
+                pane: 'pane_argile_30_100_mean_10',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,181,216,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 200.000000 && feature.properties['valeur'] <= 300.000000 ) {
+                return {
+                pane: 'pane_argile_30_100_mean_10',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,101,176,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 300.000000 && feature.properties['valeur'] <= 400.000000 ) {
+                return {
+                pane: 'pane_argile_30_100_mean_10',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,28,119,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 400.000000 && feature.properties['valeur'] <= 432.080925 ) {
+                return {
+                pane: 'pane_argile_30_100_mean_10',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(152,0,67,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_argile_30_100_mean_10');
+        map.getPane('pane_argile_30_100_mean_10').style.zIndex = 410;
+        map.getPane('pane_argile_30_100_mean_10').style['mix-blend-mode'] = 'normal';
+        var layer_argile_30_100_mean_10 = new L.geoJson(json_argile_30_100_mean_10, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_argile_30_100_mean_10',
+            layerName: 'layer_argile_30_100_mean_10',
+            pane: 'pane_argile_30_100_mean_10',
+            onEachFeature: pop_argile_30_100_mean_10,
+            style: style_argile_30_100_mean_10_0,
+        });
+        bounds_group.addLayer(layer_argile_30_100_mean_10);
+        map.addLayer(layer_argile_30_100_mean_10);
+        function pop_argile_0_30_mean_11(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_argile_0_30_mean_11_0(feature) {
+            if (feature.properties['valeur'] >= 35.645080 && feature.properties['valeur'] <= 100.000000 ) {
+                return {
+                pane: 'pane_argile_0_30_mean_11',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(241,238,246,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 100.000000 && feature.properties['valeur'] <= 200.000000 ) {
+                return {
+                pane: 'pane_argile_0_30_mean_11',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,181,216,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 200.000000 && feature.properties['valeur'] <= 300.000000 ) {
+                return {
+                pane: 'pane_argile_0_30_mean_11',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,101,176,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 300.000000 && feature.properties['valeur'] <= 400.000000 ) {
+                return {
+                pane: 'pane_argile_0_30_mean_11',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,28,119,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 400.000000 && feature.properties['valeur'] <= 466.663455 ) {
+                return {
+                pane: 'pane_argile_0_30_mean_11',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(152,0,67,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_argile_0_30_mean_11');
+        map.getPane('pane_argile_0_30_mean_11').style.zIndex = 411;
+        map.getPane('pane_argile_0_30_mean_11').style['mix-blend-mode'] = 'normal';
+        var layer_argile_0_30_mean_11 = new L.geoJson(json_argile_0_30_mean_11, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_argile_0_30_mean_11',
+            layerName: 'layer_argile_0_30_mean_11',
+            pane: 'pane_argile_0_30_mean_11',
+            onEachFeature: pop_argile_0_30_mean_11,
+            style: style_argile_0_30_mean_11_0,
+        });
+        bounds_group.addLayer(layer_argile_0_30_mean_11);
+        map.addLayer(layer_argile_0_30_mean_11);
+        function pop_northness_mean_12(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_northness_mean_12_0(feature) {
+            if (feature.properties['valeur'] >= -0.633550 && feature.properties['valeur'] <= -0.179843 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(247,251,255,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -0.179843 && feature.properties['valeur'] <= -0.079054 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(220,233,246,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -0.079054 && feature.properties['valeur'] <= -0.000582 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(190,216,236,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -0.000582 && feature.properties['valeur'] <= 0.053987 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(143,194,222,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.053987 && feature.properties['valeur'] <= 0.108779 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(91,163,208,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.108779 && feature.properties['valeur'] <= 0.162177 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(50,130,190,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.162177 && feature.properties['valeur'] <= 0.240900 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(17,92,165,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.240900 && feature.properties['valeur'] <= 0.628048 ) {
+                return {
+                pane: 'pane_northness_mean_12',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(8,48,107,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_northness_mean_12');
+        map.getPane('pane_northness_mean_12').style.zIndex = 412;
+        map.getPane('pane_northness_mean_12').style['mix-blend-mode'] = 'normal';
+        var layer_northness_mean_12 = new L.geoJson(json_northness_mean_12, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_northness_mean_12',
+            layerName: 'layer_northness_mean_12',
+            pane: 'pane_northness_mean_12',
+            onEachFeature: pop_northness_mean_12,
+            style: style_northness_mean_12_0,
+        });
+        bounds_group.addLayer(layer_northness_mean_12);
+        map.addLayer(layer_northness_mean_12);
+        function pop_eastness_mean_13(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_eastness_mean_13_0(feature) {
+            if (feature.properties['valeur'] >= -0.769672 && feature.properties['valeur'] <= -0.267659 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,255,255,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -0.267659 && feature.properties['valeur'] <= -0.167503 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,219,219,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -0.167503 && feature.properties['valeur'] <= -0.083151 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,182,182,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= -0.083151 && feature.properties['valeur'] <= 0.007601 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,146,146,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.007601 && feature.properties['valeur'] <= 0.103928 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,109,109,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.103928 && feature.properties['valeur'] <= 0.203320 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,73,73,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.203320 && feature.properties['valeur'] <= 0.313343 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,36,36,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 0.313343 && feature.properties['valeur'] <= 0.793725 ) {
+                return {
+                pane: 'pane_eastness_mean_13',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,0,0,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_eastness_mean_13');
+        map.getPane('pane_eastness_mean_13').style.zIndex = 413;
+        map.getPane('pane_eastness_mean_13').style['mix-blend-mode'] = 'normal';
+        var layer_eastness_mean_13 = new L.geoJson(json_eastness_mean_13, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_eastness_mean_13',
+            layerName: 'layer_eastness_mean_13',
+            pane: 'pane_eastness_mean_13',
+            onEachFeature: pop_eastness_mean_13,
+            style: style_eastness_mean_13_0,
+        });
+        bounds_group.addLayer(layer_eastness_mean_13);
+        map.addLayer(layer_eastness_mean_13);
+        function pop_alt_mean_14(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_alt_mean_14_0(feature) {
+            if (feature.properties['valeur'] >= 48.566143 && feature.properties['valeur'] <= 89.224578 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(1,133,113,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 89.224578 && feature.properties['valeur'] <= 101.190724 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(37,154,136,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 101.190724 && feature.properties['valeur'] <= 110.014754 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(74,174,159,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 110.014754 && feature.properties['valeur'] <= 117.442610 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(110,195,182,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 117.442610 && feature.properties['valeur'] <= 124.523525 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(145,211,200,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 124.523525 && feature.properties['valeur'] <= 131.118090 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(178,222,215,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 131.118090 && feature.properties['valeur'] <= 137.997383 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(212,234,230,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 137.997383 && feature.properties['valeur'] <= 144.450851 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(245,245,245,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 144.450851 && feature.properties['valeur'] <= 150.749744 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(239,230,211,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 150.749744 && feature.properties['valeur'] <= 157.722763 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(232,216,176,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 157.722763 && feature.properties['valeur'] <= 166.292755 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(226,201,142,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 166.292755 && feature.properties['valeur'] <= 178.089054 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,180,111,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 178.089054 && feature.properties['valeur'] <= 189.837806 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(199,152,83,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 189.837806 && feature.properties['valeur'] <= 207.182464 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(182,125,54,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 207.182464 && feature.properties['valeur'] <= 268.139650 ) {
+                return {
+                pane: 'pane_alt_mean_14',
+                opacity: 1,
+                color: 'rgba(247,247,247,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(166,97,26,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_alt_mean_14');
+        map.getPane('pane_alt_mean_14').style.zIndex = 414;
+        map.getPane('pane_alt_mean_14').style['mix-blend-mode'] = 'normal';
+        var layer_alt_mean_14 = new L.geoJson(json_alt_mean_14, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_alt_mean_14',
+            layerName: 'layer_alt_mean_14',
+            pane: 'pane_alt_mean_14',
+            onEachFeature: pop_alt_mean_14,
+            style: style_alt_mean_14_0,
+        });
+        bounds_group.addLayer(layer_alt_mean_14);
+        map.addLayer(layer_alt_mean_14);
+        function pop_slope_mean_15(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['valeur'] !== null ? autolinker.link(String(feature.properties['valeur']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_slope_mean_15_0(feature) {
+            if (feature.properties['valeur'] >= 0.373632 && feature.properties['valeur'] <= 1.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,245,235,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 1.373632 && feature.properties['valeur'] <= 2.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,236,199,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 2.373632 && feature.properties['valeur'] <= 3.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,228,164,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 3.373632 && feature.properties['valeur'] <= 4.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,219,128,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 4.373632 && feature.properties['valeur'] <= 5.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,200,105,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 5.373632 && feature.properties['valeur'] <= 6.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(253,177,87,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 6.373632 && feature.properties['valeur'] <= 7.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(253,154,70,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 7.373632 && feature.properties['valeur'] <= 8.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(249,125,56,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 8.373632 && feature.properties['valeur'] <= 9.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(242,91,46,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 9.373632 && feature.properties['valeur'] <= 10.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(234,56,36,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 10.373632 && feature.properties['valeur'] <= 11.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,25,28,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 11.373632 && feature.properties['valeur'] <= 12.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(191,17,32,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 12.373632 && feature.properties['valeur'] <= 13.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(160,8,35,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['valeur'] >= 13.373632 && feature.properties['valeur'] <= 14.373632 ) {
+                return {
+                pane: 'pane_slope_mean_15',
+                opacity: 1,
+                color: 'rgba(247,247,247,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(128,0,38,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_slope_mean_15');
+        map.getPane('pane_slope_mean_15').style.zIndex = 415;
+        map.getPane('pane_slope_mean_15').style['mix-blend-mode'] = 'normal';
+        var layer_slope_mean_15 = new L.geoJson(json_slope_mean_15, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_slope_mean_15',
+            layerName: 'layer_slope_mean_15',
+            pane: 'pane_slope_mean_15',
+            onEachFeature: pop_slope_mean_15,
+            style: style_slope_mean_15_0,
+        });
+        bounds_group.addLayer(layer_slope_mean_15);
+        map.addLayer(layer_slope_mean_15);
+        function pop_ilots_polygone_16(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ilot'] !== null ? autolinker.link(String(feature.properties['ilot']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Surface_po'] !== null ? autolinker.link(String(feature.properties['Surface_po']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_ilots_polygone_16_0() {
+            return {
+                pane: 'pane_ilots_polygone_16',
+                opacity: 1,
+                color: 'rgba(228,26,28,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 4.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_ilots_polygone_16');
+        map.getPane('pane_ilots_polygone_16').style.zIndex = 416;
+        map.getPane('pane_ilots_polygone_16').style['mix-blend-mode'] = 'normal';
+        var layer_ilots_polygone_16 = new L.geoJson(json_ilots_polygone_16, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_ilots_polygone_16',
+            layerName: 'layer_ilots_polygone_16',
+            pane: 'pane_ilots_polygone_16',
+            onEachFeature: pop_ilots_polygone_16,
+            style: style_ilots_polygone_16_0,
+        });
+        bounds_group.addLayer(layer_ilots_polygone_16);
+        map.addLayer(layer_ilots_polygone_16);
+        function pop_ilot_grid_modis1km_17(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gres'] !== null ? autolinker.link(String(feature.properties['gres']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['pid'] !== null ? autolinker.link(String(feature.properties['pid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['zone'] !== null ? autolinker.link(String(feature.properties['zone']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['aire_pixel'] !== null ? autolinker.link(String(feature.properties['aire_pixel']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_ilot_grid_modis1km_17_0() {
+            return {
+                pane: 'pane_ilot_grid_modis1km_17',
+                opacity: 1,
+                color: 'rgba(224,10,248,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(231,113,72,0.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_ilot_grid_modis1km_17');
+        map.getPane('pane_ilot_grid_modis1km_17').style.zIndex = 417;
+        map.getPane('pane_ilot_grid_modis1km_17').style['mix-blend-mode'] = 'normal';
+        var layer_ilot_grid_modis1km_17 = new L.geoJson(json_ilot_grid_modis1km_17, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_ilot_grid_modis1km_17',
+            layerName: 'layer_ilot_grid_modis1km_17',
+            pane: 'pane_ilot_grid_modis1km_17',
+            onEachFeature: pop_ilot_grid_modis1km_17,
+            style: style_ilot_grid_modis1km_17_0,
+        });
+        bounds_group.addLayer(layer_ilot_grid_modis1km_17);
+        map.addLayer(layer_ilot_grid_modis1km_17);
+        function pop_ilot_centroides_18(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['pid'] !== null ? autolinker.link(String(feature.properties['pid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_ilot_centroides_18_0() {
+            return {
+                pane: 'pane_ilot_centroides_18',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(190,207,80,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_ilot_centroides_18');
+        map.getPane('pane_ilot_centroides_18').style.zIndex = 418;
+        map.getPane('pane_ilot_centroides_18').style['mix-blend-mode'] = 'normal';
+        var layer_ilot_centroides_18 = new L.geoJson(json_ilot_centroides_18, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_ilot_centroides_18',
+            layerName: 'layer_ilot_centroides_18',
+            pane: 'pane_ilot_centroides_18',
+            onEachFeature: pop_ilot_centroides_18,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_ilot_centroides_18_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_ilot_centroides_18);
+        map.addLayer(layer_ilot_centroides_18);
+        map.createPane('pane_Photographiesarienneshistoriques19801995_19');
+        map.getPane('pane_Photographiesarienneshistoriques19801995_19').style.zIndex = 419;
+        var layer_Photographiesarienneshistoriques19801995_19 = L.tileLayer.wmts('https://data.geopf.fr/wmts', {
+            pane: 'pane_Photographiesarienneshistoriques19801995_19',
+            layer: 'ORTHOIMAGERY.ORTHOPHOTOS.1980-1995',
+            tilematrixSet: 'PM_3_18',
+            format: 'image/png',
+            style: 'BDORTHOHISTORIQUE',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            opacity: 1.0,
+            attribution: '',
+        });
+        map.addLayer(layer_Photographiesarienneshistoriques19801995_19);
+        map.createPane('pane_Photographiesarienneshistoriques19651980_20');
+        map.getPane('pane_Photographiesarienneshistoriques19651980_20').style.zIndex = 420;
+        var layer_Photographiesarienneshistoriques19651980_20 = L.tileLayer.wmts('https://data.geopf.fr/wmts', {
+            pane: 'pane_Photographiesarienneshistoriques19651980_20',
+            layer: 'ORTHOIMAGERY.ORTHOPHOTOS.1965-1980',
+            tilematrixSet: 'PM_3_18',
+            format: 'image/png',
+            style: 'BDORTHOHISTORIQUE',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            opacity: 1.0,
+            attribution: '',
+        });
+        map.addLayer(layer_Photographiesarienneshistoriques19651980_20);
+        function pop_grid_MODIS_1km_Armagnac_2154_21(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gres'] !== null ? autolinker.link(String(feature.properties['gres']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['pid'] !== null ? autolinker.link(String(feature.properties['pid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['zone'] !== null ? autolinker.link(String(feature.properties['zone']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['X'] !== null ? autolinker.link(String(feature.properties['X']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Y'] !== null ? autolinker.link(String(feature.properties['Y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['aire_pixel'] !== null ? autolinker.link(String(feature.properties['aire_pixel']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_grid_MODIS_1km_Armagnac_2154_21_0() {
+            return {
+                pane: 'pane_grid_MODIS_1km_Armagnac_2154_21',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(133,182,111,0.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_grid_MODIS_1km_Armagnac_2154_21');
+        map.getPane('pane_grid_MODIS_1km_Armagnac_2154_21').style.zIndex = 421;
+        map.getPane('pane_grid_MODIS_1km_Armagnac_2154_21').style['mix-blend-mode'] = 'normal';
+        var layer_grid_MODIS_1km_Armagnac_2154_21 = new L.geoJson(json_grid_MODIS_1km_Armagnac_2154_21, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_grid_MODIS_1km_Armagnac_2154_21',
+            layerName: 'layer_grid_MODIS_1km_Armagnac_2154_21',
+            pane: 'pane_grid_MODIS_1km_Armagnac_2154_21',
+            onEachFeature: pop_grid_MODIS_1km_Armagnac_2154_21,
+            style: style_grid_MODIS_1km_Armagnac_2154_21_0,
+        });
+        bounds_group.addLayer(layer_grid_MODIS_1km_Armagnac_2154_21);
+        map.addLayer(layer_grid_MODIS_1km_Armagnac_2154_21);
+        function pop_Contour_Armagnac_22(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ZONE'] !== null ? autolinker.link(String(feature.properties['ZONE']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ID'] !== null ? autolinker.link(String(feature.properties['ID']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NOM'] !== null ? autolinker.link(String(feature.properties['NOM']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NOM_M'] !== null ? autolinker.link(String(feature.properties['NOM_M']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['INSEE_COM'] !== null ? autolinker.link(String(feature.properties['INSEE_COM']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['STATUT'] !== null ? autolinker.link(String(feature.properties['STATUT']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['POPULATION'] !== null ? autolinker.link(String(feature.properties['POPULATION']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['INSEE_CAN'] !== null ? autolinker.link(String(feature.properties['INSEE_CAN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['INSEE_ARR'] !== null ? autolinker.link(String(feature.properties['INSEE_ARR']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['INSEE_DEP'] !== null ? autolinker.link(String(feature.properties['INSEE_DEP']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['INSEE_REG'] !== null ? autolinker.link(String(feature.properties['INSEE_REG']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['SIREN_EPCI'] !== null ? autolinker.link(String(feature.properties['SIREN_EPCI']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NOM_M_NORM'] !== null ? autolinker.link(String(feature.properties['NOM_M_NORM']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['layer'] !== null ? autolinker.link(String(feature.properties['layer']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['path'] !== null ? autolinker.link(String(feature.properties['path']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Contour_Armagnac_22_0() {
+            return {
+                pane: 'pane_Contour_Armagnac_22',
+                opacity: 1,
+                color: 'rgba(232,35,222,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(196,60,57,0.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Contour_Armagnac_22');
+        map.getPane('pane_Contour_Armagnac_22').style.zIndex = 422;
+        map.getPane('pane_Contour_Armagnac_22').style['mix-blend-mode'] = 'normal';
+        var layer_Contour_Armagnac_22 = new L.geoJson(json_Contour_Armagnac_22, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Contour_Armagnac_22',
+            layerName: 'layer_Contour_Armagnac_22',
+            pane: 'pane_Contour_Armagnac_22',
+            onEachFeature: pop_Contour_Armagnac_22,
+            style: style_Contour_Armagnac_22_0,
+        });
+        bounds_group.addLayer(layer_Contour_Armagnac_22);
+        map.addLayer(layer_Contour_Armagnac_22);
+        var overlaysTree = [
+        {label: '<b>Situation</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/Contour_Armagnac_22.png" /> Contour_Armagnac', layer: layer_Contour_Armagnac_22},
+            {label: '<img src="legend/grid_MODIS_1km_Armagnac_2154_21.png" /> grid_MODIS_1km_Armagnac_2154', layer: layer_grid_MODIS_1km_Armagnac_2154_21},
+            {label: "Photographies aériennes historiques 1965-1980", layer: layer_Photographiesarienneshistoriques19651980_20},
+            {label: "Photographies aériennes historiques 1980-1995", layer: layer_Photographiesarienneshistoriques19801995_19},]},
+        {label: '<b>ilots_ecovitivert</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/ilot_centroides_18.png" /> ilot_centroides', layer: layer_ilot_centroides_18},
+            {label: '<img src="legend/ilot_grid_modis1km_17.png" /> ilot_grid_modis1km', layer: layer_ilot_grid_modis1km_17},
+            {label: '<img src="legend/ilots_polygone_16.png" /> ilots_polygone', layer: layer_ilots_polygone_16},]},
+        {label: '<b>Topo</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'slope_mean<br /><table><tr><td style="text-align: center;"><img src="legend/slope_mean_15_010.png" /></td><td>0 - 1</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_121.png" /></td><td>1 - 2</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_232.png" /></td><td>2 - 3</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_343.png" /></td><td>3 - 4</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_454.png" /></td><td>4 - 5</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_565.png" /></td><td>5 - 6</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_676.png" /></td><td>6 - 7</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_787.png" /></td><td>7 - 8</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_898.png" /></td><td>8 - 9</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_9109.png" /></td><td>9 - 10</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_101110.png" /></td><td>10 - 11</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_111211.png" /></td><td>11 - 12</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_121312.png" /></td><td>12 - 13</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_131413.png" /></td><td>13 - 14</td></tr></table>', layer: layer_slope_mean_15},
+            {label: 'alt_mean<br /><table><tr><td style="text-align: center;"><img src="legend/alt_mean_14_4868920.png" /></td><td>48.6 - 89.2</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_89210121.png" /></td><td>89.2 - 101.2</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_10121102.png" /></td><td>101.2 - 110</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_11011743.png" /></td><td>110 - 117.4</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_117412454.png" /></td><td>117.4 - 124.5</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_124513115.png" /></td><td>124.5 - 131.1</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_13111386.png" /></td><td>131.1 - 138</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_13814457.png" /></td><td>138 - 144.5</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_144515078.png" /></td><td>144.5 - 150.7</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_150715779.png" /></td><td>150.7 - 157.7</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1577166310.png" /></td><td>157.7 - 166.3</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1663178111.png" /></td><td>166.3 - 178.1</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1781189812.png" /></td><td>178.1 - 189.8</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1898207213.png" /></td><td>189.8 - 207.2</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_2072268114.png" /></td><td>207.2 - 268.1</td></tr></table>', layer: layer_alt_mean_14},
+            {label: 'eastness_mean<br /><table><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_07702680.png" /></td><td>-0.77 - -0.268</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_026801681.png" /></td><td>-0.268 - -0.168</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_016800832.png" /></td><td>-0.168 - -0.083</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_008300083.png" /></td><td>-0.083 - 0.008</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_000801044.png" /></td><td>0.008 - 0.104</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_010402035.png" /></td><td>0.104 - 0.203</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_020303136.png" /></td><td>0.203 - 0.313</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_031307947.png" /></td><td>0.313 - 0.794</td></tr></table>', layer: layer_eastness_mean_13},
+            {label: 'northness_mean<br /><table><tr><td style="text-align: center;"><img src="legend/northness_mean_12_06340180.png" /></td><td>-0.634 - -0.18</td></tr><tr><td style="text-align: center;"><img src="legend/northness_mean_12_01800791.png" /></td><td>-0.18 - -0.079</td></tr><tr><td style="text-align: center;"><img src="legend/northness_mean_12_007900012.png" /></td><td>-0.079 - -0.001</td></tr><tr><td style="text-align: center;"><img src="legend/northness_mean_12_000100543.png" /></td><td>-0.001 - 0.054</td></tr><tr><td style="text-align: center;"><img src="legend/northness_mean_12_005401094.png" /></td><td>0.054 - 0.109</td></tr><tr><td style="text-align: center;"><img src="legend/northness_mean_12_010901625.png" /></td><td>0.109 - 0.162</td></tr><tr><td style="text-align: center;"><img src="legend/northness_mean_12_016202416.png" /></td><td>0.162 - 0.241</td></tr><tr><td style="text-align: center;"><img src="legend/northness_mean_12_024106287.png" /></td><td>0.241 - 0.628</td></tr></table>', layer: layer_northness_mean_12},]},
+        {label: '<b>Texture</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'argile_0_30_mean<br /><table><tr><td style="text-align: center;"><img src="legend/argile_0_30_mean_11_361000.png" /></td><td>36 - 100</td></tr><tr><td style="text-align: center;"><img src="legend/argile_0_30_mean_11_1002001.png" /></td><td>100 - 200</td></tr><tr><td style="text-align: center;"><img src="legend/argile_0_30_mean_11_2003002.png" /></td><td>200 - 300</td></tr><tr><td style="text-align: center;"><img src="legend/argile_0_30_mean_11_3004003.png" /></td><td>300 - 400</td></tr><tr><td style="text-align: center;"><img src="legend/argile_0_30_mean_11_4004674.png" /></td><td>400 - 467</td></tr></table>', layer: layer_argile_0_30_mean_11},
+            {label: 'argile_30_100_mean<br /><table><tr><td style="text-align: center;"><img src="legend/argile_30_100_mean_10_341000.png" /></td><td>34 - 100</td></tr><tr><td style="text-align: center;"><img src="legend/argile_30_100_mean_10_1002001.png" /></td><td>100 - 200</td></tr><tr><td style="text-align: center;"><img src="legend/argile_30_100_mean_10_2003002.png" /></td><td>200 - 300</td></tr><tr><td style="text-align: center;"><img src="legend/argile_30_100_mean_10_3004003.png" /></td><td>300 - 400</td></tr><tr><td style="text-align: center;"><img src="legend/argile_30_100_mean_10_4004324.png" /></td><td>400 - 432</td></tr></table>', layer: layer_argile_30_100_mean_10},
+            {label: 'limon_0_30_mean<br /><table><tr><td style="text-align: center;"><img src="legend/limon_0_30_mean_9_471000.png" /></td><td>47 - 100</td></tr><tr><td style="text-align: center;"><img src="legend/limon_0_30_mean_9_1002001.png" /></td><td>100 - 200</td></tr><tr><td style="text-align: center;"><img src="legend/limon_0_30_mean_9_2003002.png" /></td><td>200 - 300</td></tr><tr><td style="text-align: center;"><img src="legend/limon_0_30_mean_9_3004003.png" /></td><td>300 - 400</td></tr><tr><td style="text-align: center;"><img src="legend/limon_0_30_mean_9_4005004.png" /></td><td>400 - 500</td></tr><tr><td style="text-align: center;"><img src="legend/limon_0_30_mean_9_5005985.png" /></td><td>500 - 598</td></tr></table>', layer: layer_limon_0_30_mean_9},
+            {label: 'limon_30_100_mean<br /><table><tr><td style="text-align: center;"><img src="legend/limon_30_100_mean_8_291000.png" /></td><td>29 - 100</td></tr><tr><td style="text-align: center;"><img src="legend/limon_30_100_mean_8_1002001.png" /></td><td>100 - 200</td></tr><tr><td style="text-align: center;"><img src="legend/limon_30_100_mean_8_2003002.png" /></td><td>200 - 300</td></tr><tr><td style="text-align: center;"><img src="legend/limon_30_100_mean_8_3004003.png" /></td><td>300 - 400</td></tr><tr><td style="text-align: center;"><img src="legend/limon_30_100_mean_8_4005004.png" /></td><td>400 - 500</td></tr><tr><td style="text-align: center;"><img src="legend/limon_30_100_mean_8_5005565.png" /></td><td>500 - 556</td></tr></table>', layer: layer_limon_30_100_mean_8},
+            {label: 'ph_0_30_mean<br /><table><tr><td style="text-align: center;"><img src="legend/ph_0_30_mean_7_46950.png" /></td><td>4.69 - 5</td></tr><tr><td style="text-align: center;"><img src="legend/ph_0_30_mean_7_561.png" /></td><td>5 - 6</td></tr><tr><td style="text-align: center;"><img src="legend/ph_0_30_mean_7_672.png" /></td><td>6 - 7</td></tr><tr><td style="text-align: center;"><img src="legend/ph_0_30_mean_7_783.png" /></td><td>7 - 8</td></tr><tr><td style="text-align: center;"><img src="legend/ph_0_30_mean_7_88244.png" /></td><td>8 - 8.24</td></tr></table>', layer: layer_ph_0_30_mean_7},
+            {label: 'ph_30_100_mean<br /><table><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_4950.png" /></td><td>4.9 - 5</td></tr><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_5551.png" /></td><td>5 - 5.5</td></tr><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_5562.png" /></td><td>5.5 - 6</td></tr><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_6653.png" /></td><td>6 - 6.5</td></tr><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_6574.png" /></td><td>6.5 - 7</td></tr><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_7755.png" /></td><td>7 - 7.5</td></tr><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_7586.png" /></td><td>7.5 - 8</td></tr><tr><td style="text-align: center;"><img src="legend/ph_30_100_mean_6_88377.png" /></td><td>8 - 8.37</td></tr></table>', layer: layer_ph_30_100_mean_6},
+            {label: 'sable_0_30_mean<br /><table><tr><td style="text-align: center;"><img src="legend/sable_0_30_mean_5_1332000.png" /></td><td>133 - 200</td></tr><tr><td style="text-align: center;"><img src="legend/sable_0_30_mean_5_2004001.png" /></td><td>200 - 400</td></tr><tr><td style="text-align: center;"><img src="legend/sable_0_30_mean_5_4006002.png" /></td><td>400 - 600</td></tr><tr><td style="text-align: center;"><img src="legend/sable_0_30_mean_5_6008003.png" /></td><td>600 - 800</td></tr><tr><td style="text-align: center;"><img src="legend/sable_0_30_mean_5_8008814.png" /></td><td>800 - 881</td></tr></table>', layer: layer_sable_0_30_mean_5},
+            {label: 'sable_30_100_mean<br /><table><tr><td style="text-align: center;"><img src="legend/sable_30_100_mean_4_1182000.png" /></td><td>118 - 200</td></tr><tr><td style="text-align: center;"><img src="legend/sable_30_100_mean_4_2003001.png" /></td><td>200 - 300</td></tr><tr><td style="text-align: center;"><img src="legend/sable_30_100_mean_4_3004002.png" /></td><td>300 - 400</td></tr><tr><td style="text-align: center;"><img src="legend/sable_30_100_mean_4_4005003.png" /></td><td>400 - 500</td></tr><tr><td style="text-align: center;"><img src="legend/sable_30_100_mean_4_5006004.png" /></td><td>500 - 600</td></tr><tr><td style="text-align: center;"><img src="legend/sable_30_100_mean_4_6007005.png" /></td><td>600 - 700</td></tr><tr><td style="text-align: center;"><img src="legend/sable_30_100_mean_4_7007296.png" /></td><td>700 - 729</td></tr></table>', layer: layer_sable_30_100_mean_4},]},
+        {label: '<b>Météo</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: 'mean_annual_sum_rain_minus_etp<br /><table><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_78600.png" /></td><td>-78 - -60</td></tr><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_60401.png" /></td><td>-60 - -40</td></tr><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_40202.png" /></td><td>-40 - -20</td></tr><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_20203.png" /></td><td>-20 - 20</td></tr><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_20404.png" /></td><td>20 - 40</td></tr><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_40605.png" /></td><td>40 - 60</td></tr><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_60806.png" /></td><td>60 - 80</td></tr><tr><td style="text-align: center;"><img src="legend/mean_annual_sum_rain_minus_etp_3_808287.png" /></td><td>80 - 82.8</td></tr></table>', layer: layer_mean_annual_sum_rain_minus_etp_3},
+            {label: 'mean_sum_temp_0106_3108<br /><table><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_50125050.png" /></td><td>501.2 - 505</td></tr><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_5055101.png" /></td><td>505 - 510</td></tr><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_5105152.png" /></td><td>510 - 515</td></tr><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_5155203.png" /></td><td>515 - 520</td></tr><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_5205254.png" /></td><td>520 - 525</td></tr><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_5255305.png" /></td><td>525 - 530</td></tr><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_5305356.png" /></td><td>530 - 535</td></tr><tr><td style="text-align: center;"><img src="legend/mean_sum_temp_0106_3108_2_5355377.png" /></td><td>535 - 537</td></tr></table>', layer: layer_mean_sum_temp_0106_3108_2},
+            {label: 'mean_summer_mean_swi<br /><table><tr><td style="text-align: center;"><img src="legend/mean_summer_mean_swi_1_0254030.png" /></td><td>0.254 - 0.3</td></tr><tr><td style="text-align: center;"><img src="legend/mean_summer_mean_swi_1_030351.png" /></td><td>0.3 - 0.35</td></tr><tr><td style="text-align: center;"><img src="legend/mean_summer_mean_swi_1_035042.png" /></td><td>0.35 - 0.4</td></tr><tr><td style="text-align: center;"><img src="legend/mean_summer_mean_swi_1_040453.png" /></td><td>0.4 - 0.45</td></tr><tr><td style="text-align: center;"><img src="legend/mean_summer_mean_swi_1_045054.png" /></td><td>0.45 - 0.5</td></tr><tr><td style="text-align: center;"><img src="legend/mean_summer_mean_swi_1_0505285.png" /></td><td>0.5 - 0.528</td></tr></table>', layer: layer_mean_summer_mean_swi_1},]},
+            {label: "Esri Imagery", layer: layer_EsriImagery_0, radioGroup: 'bm' },]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: false, 
+        });
+        lay.addTo(map);
+		document.addEventListener("DOMContentLoaded", function() {
+            // set new Layers List height which considers toggle icon
+            function newLayersListHeight() {
+                var layerScrollbarElement = document.querySelector('.leaflet-control-layers-scrollbar');
+                if (layerScrollbarElement) {
+                    var layersListElement = document.querySelector('.leaflet-control-layers-list');
+                    var originalHeight = layersListElement.style.height 
+                        || window.getComputedStyle(layersListElement).height;
+                    var newHeight = parseFloat(originalHeight) - 50;
+                    layersListElement.style.height = newHeight + 'px';
+                }
+            }
+            var isLayersListExpanded = true;
+            var controlLayersElement = document.querySelector('.leaflet-control-layers');
+            var toggleLayerControl = document.querySelector('.leaflet-control-layers-toggle');
+            // toggle Collapsed/Expanded and apply new Layers List height
+            toggleLayerControl.addEventListener('click', function() {
+                if (isLayersListExpanded) {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                } else {
+                    controlLayersElement.classList.add('leaflet-control-layers-expanded');
+                }
+                isLayersListExpanded = !isLayersListExpanded;
+                newLayersListHeight()
+            });	
+			// apply new Layers List height if toggle layerstree
+			if (controlLayersElement) {
+				controlLayersElement.addEventListener('click', function(event) {
+					var toggleLayerHeaderPointer = event.target.closest('.leaflet-layerstree-header-pointer span');
+					if (toggleLayerHeaderPointer) {
+						newLayersListHeight();
+					}
+				});
+			}
+            // Collapsed/Expanded at Start to apply new height
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            // Collapsed touch/small screen
+            var isSmallScreen = window.innerWidth < 650;
+            if (isSmallScreen) {
+                setTimeout(function() {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                    isLayersListExpanded = !isLayersListExpanded;
+                }, 500);
+            }  
+        });       
+        setBounds();
+        </script>        
+    </body>
+</html>
