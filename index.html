@@ -55,15 +55,15 @@
         <script src="data/eastness_mean_13.js"></script>
         <script src="data/alt_mean_14.js"></script>
         <script src="data/slope_mean_15.js"></script>
-        <script src="data/grid_MODIS_1km_Armagnac_2154_18.js"></script>
-        <script src="data/Contour_Armagnac_19.js"></script>
-        <script src="data/ilots_polygone_20.js"></script>
-        <script src="data/ilot_grid_modis1km_21.js"></script>
-        <script src="data/ilot_centroides_22.js"></script>
+        <script src="data/grid_MODIS_1km_Armagnac_2154_17.js"></script>
+        <script src="data/Contour_Armagnac_18.js"></script>
+        <script src="data/ilots_polygone_19.js"></script>
+        <script src="data/ilot_grid_modis1km_20.js"></script>
+        <script src="data/ilot_centroides_21.js"></script>
         <script>
         var map = L.map('map', {
             zoomControl:false, maxZoom:28, minZoom:1
-        }).fitBounds([[43.56278853570754,-0.20438711002706042],[43.7610955607293,0.1336643403953621]]);
+        }).fitBounds([[42.332439464607575,-2.830045451371255],[45.50417968724506,2.6075307628222406]]);
         var hash = new L.Hash(map);
         map.attributionControl.setPrefix('<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
         var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
@@ -2435,25 +2435,10 @@
         });
         bounds_group.addLayer(layer_slope_mean_15);
         map.addLayer(layer_slope_mean_15);
-        map.createPane('pane_Photographiesarienneshistoriques19801995_16');
-        map.getPane('pane_Photographiesarienneshistoriques19801995_16').style.zIndex = 416;
-        var layer_Photographiesarienneshistoriques19801995_16 = L.tileLayer.wmts('https://data.geopf.fr/wmts', {
-            pane: 'pane_Photographiesarienneshistoriques19801995_16',
-            layer: 'ORTHOIMAGERY.ORTHOPHOTOS.1980-1995',
-            tilematrixSet: 'PM_3_18',
-            format: 'image/png',
-            style: 'BDORTHOHISTORIQUE',
-            uppercase: true,
-            transparent: true,
-            continuousWorld : true,
-            opacity: 1.0,
-            attribution: '',
-        });
-        map.addLayer(layer_Photographiesarienneshistoriques19801995_16);
-        map.createPane('pane_Photographiesarienneshistoriques19651980_17');
-        map.getPane('pane_Photographiesarienneshistoriques19651980_17').style.zIndex = 417;
-        var layer_Photographiesarienneshistoriques19651980_17 = L.tileLayer.wmts('https://data.geopf.fr/wmts', {
-            pane: 'pane_Photographiesarienneshistoriques19651980_17',
+        map.createPane('pane_Photographiesarienneshistoriques19651980_16');
+        map.getPane('pane_Photographiesarienneshistoriques19651980_16').style.zIndex = 416;
+        var layer_Photographiesarienneshistoriques19651980_16 = L.tileLayer.wmts('https://data.geopf.fr/wmts', {
+            pane: 'pane_Photographiesarienneshistoriques19651980_16',
             layer: 'ORTHOIMAGERY.ORTHOPHOTOS.1965-1980',
             tilematrixSet: 'PM_3_18',
             format: 'image/png',
@@ -2464,8 +2449,8 @@
             opacity: 1.0,
             attribution: '',
         });
-        map.addLayer(layer_Photographiesarienneshistoriques19651980_17);
-        function pop_grid_MODIS_1km_Armagnac_2154_18(feature, layer) {
+        map.addLayer(layer_Photographiesarienneshistoriques19651980_16);
+        function pop_grid_MODIS_1km_Armagnac_2154_17(feature, layer) {
             var popupContent = '<table>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
@@ -2496,9 +2481,9 @@
 			layer.bindPopup(content, { maxHeight: 400 });
         }
 
-        function style_grid_MODIS_1km_Armagnac_2154_18_0() {
+        function style_grid_MODIS_1km_Armagnac_2154_17_0() {
             return {
-                pane: 'pane_grid_MODIS_1km_Armagnac_2154_18',
+                pane: 'pane_grid_MODIS_1km_Armagnac_2154_17',
                 opacity: 1,
                 color: 'rgba(35,35,35,1.0)',
                 dashArray: '',
@@ -2511,21 +2496,21 @@
                 interactive: false,
             }
         }
-        map.createPane('pane_grid_MODIS_1km_Armagnac_2154_18');
-        map.getPane('pane_grid_MODIS_1km_Armagnac_2154_18').style.zIndex = 418;
-        map.getPane('pane_grid_MODIS_1km_Armagnac_2154_18').style['mix-blend-mode'] = 'normal';
-        var layer_grid_MODIS_1km_Armagnac_2154_18 = new L.geoJson(json_grid_MODIS_1km_Armagnac_2154_18, {
+        map.createPane('pane_grid_MODIS_1km_Armagnac_2154_17');
+        map.getPane('pane_grid_MODIS_1km_Armagnac_2154_17').style.zIndex = 417;
+        map.getPane('pane_grid_MODIS_1km_Armagnac_2154_17').style['mix-blend-mode'] = 'normal';
+        var layer_grid_MODIS_1km_Armagnac_2154_17 = new L.geoJson(json_grid_MODIS_1km_Armagnac_2154_17, {
             attribution: '',
             interactive: false,
-            dataVar: 'json_grid_MODIS_1km_Armagnac_2154_18',
-            layerName: 'layer_grid_MODIS_1km_Armagnac_2154_18',
-            pane: 'pane_grid_MODIS_1km_Armagnac_2154_18',
-            onEachFeature: pop_grid_MODIS_1km_Armagnac_2154_18,
-            style: style_grid_MODIS_1km_Armagnac_2154_18_0,
+            dataVar: 'json_grid_MODIS_1km_Armagnac_2154_17',
+            layerName: 'layer_grid_MODIS_1km_Armagnac_2154_17',
+            pane: 'pane_grid_MODIS_1km_Armagnac_2154_17',
+            onEachFeature: pop_grid_MODIS_1km_Armagnac_2154_17,
+            style: style_grid_MODIS_1km_Armagnac_2154_17_0,
         });
-        bounds_group.addLayer(layer_grid_MODIS_1km_Armagnac_2154_18);
-        map.addLayer(layer_grid_MODIS_1km_Armagnac_2154_18);
-        function pop_Contour_Armagnac_19(feature, layer) {
+        bounds_group.addLayer(layer_grid_MODIS_1km_Armagnac_2154_17);
+        map.addLayer(layer_grid_MODIS_1km_Armagnac_2154_17);
+        function pop_Contour_Armagnac_18(feature, layer) {
             var popupContent = '<table>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
@@ -2583,9 +2568,9 @@
 			layer.bindPopup(content, { maxHeight: 400 });
         }
 
-        function style_Contour_Armagnac_19_0() {
+        function style_Contour_Armagnac_18_0() {
             return {
-                pane: 'pane_Contour_Armagnac_19',
+                pane: 'pane_Contour_Armagnac_18',
                 opacity: 1,
                 color: 'rgba(232,35,222,1.0)',
                 dashArray: '',
@@ -2598,21 +2583,21 @@
                 interactive: false,
             }
         }
-        map.createPane('pane_Contour_Armagnac_19');
-        map.getPane('pane_Contour_Armagnac_19').style.zIndex = 419;
-        map.getPane('pane_Contour_Armagnac_19').style['mix-blend-mode'] = 'normal';
-        var layer_Contour_Armagnac_19 = new L.geoJson(json_Contour_Armagnac_19, {
+        map.createPane('pane_Contour_Armagnac_18');
+        map.getPane('pane_Contour_Armagnac_18').style.zIndex = 418;
+        map.getPane('pane_Contour_Armagnac_18').style['mix-blend-mode'] = 'normal';
+        var layer_Contour_Armagnac_18 = new L.geoJson(json_Contour_Armagnac_18, {
             attribution: '',
             interactive: false,
-            dataVar: 'json_Contour_Armagnac_19',
-            layerName: 'layer_Contour_Armagnac_19',
-            pane: 'pane_Contour_Armagnac_19',
-            onEachFeature: pop_Contour_Armagnac_19,
-            style: style_Contour_Armagnac_19_0,
+            dataVar: 'json_Contour_Armagnac_18',
+            layerName: 'layer_Contour_Armagnac_18',
+            pane: 'pane_Contour_Armagnac_18',
+            onEachFeature: pop_Contour_Armagnac_18,
+            style: style_Contour_Armagnac_18_0,
         });
-        bounds_group.addLayer(layer_Contour_Armagnac_19);
-        map.addLayer(layer_Contour_Armagnac_19);
-        function pop_ilots_polygone_20(feature, layer) {
+        bounds_group.addLayer(layer_Contour_Armagnac_18);
+        map.addLayer(layer_Contour_Armagnac_18);
+        function pop_ilots_polygone_19(feature, layer) {
             var popupContent = '<table>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
@@ -2631,9 +2616,9 @@
 			layer.bindPopup(content, { maxHeight: 400 });
         }
 
-        function style_ilots_polygone_20_0() {
+        function style_ilots_polygone_19_0() {
             return {
-                pane: 'pane_ilots_polygone_20',
+                pane: 'pane_ilots_polygone_19',
                 opacity: 1,
                 color: 'rgba(228,26,28,1.0)',
                 dashArray: '',
@@ -2644,21 +2629,21 @@
                 interactive: false,
             }
         }
-        map.createPane('pane_ilots_polygone_20');
-        map.getPane('pane_ilots_polygone_20').style.zIndex = 420;
-        map.getPane('pane_ilots_polygone_20').style['mix-blend-mode'] = 'normal';
-        var layer_ilots_polygone_20 = new L.geoJson(json_ilots_polygone_20, {
+        map.createPane('pane_ilots_polygone_19');
+        map.getPane('pane_ilots_polygone_19').style.zIndex = 419;
+        map.getPane('pane_ilots_polygone_19').style['mix-blend-mode'] = 'normal';
+        var layer_ilots_polygone_19 = new L.geoJson(json_ilots_polygone_19, {
             attribution: '',
             interactive: false,
-            dataVar: 'json_ilots_polygone_20',
-            layerName: 'layer_ilots_polygone_20',
-            pane: 'pane_ilots_polygone_20',
-            onEachFeature: pop_ilots_polygone_20,
-            style: style_ilots_polygone_20_0,
+            dataVar: 'json_ilots_polygone_19',
+            layerName: 'layer_ilots_polygone_19',
+            pane: 'pane_ilots_polygone_19',
+            onEachFeature: pop_ilots_polygone_19,
+            style: style_ilots_polygone_19_0,
         });
-        bounds_group.addLayer(layer_ilots_polygone_20);
-        map.addLayer(layer_ilots_polygone_20);
-        function pop_ilot_grid_modis1km_21(feature, layer) {
+        bounds_group.addLayer(layer_ilots_polygone_19);
+        map.addLayer(layer_ilots_polygone_19);
+        function pop_ilot_grid_modis1km_20(feature, layer) {
             var popupContent = '<table>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
@@ -2692,9 +2677,9 @@
 			layer.bindPopup(content, { maxHeight: 400 });
         }
 
-        function style_ilot_grid_modis1km_21_0() {
+        function style_ilot_grid_modis1km_20_0() {
             return {
-                pane: 'pane_ilot_grid_modis1km_21',
+                pane: 'pane_ilot_grid_modis1km_20',
                 opacity: 1,
                 color: 'rgba(224,10,248,1.0)',
                 dashArray: '',
@@ -2707,21 +2692,21 @@
                 interactive: false,
             }
         }
-        map.createPane('pane_ilot_grid_modis1km_21');
-        map.getPane('pane_ilot_grid_modis1km_21').style.zIndex = 421;
-        map.getPane('pane_ilot_grid_modis1km_21').style['mix-blend-mode'] = 'normal';
-        var layer_ilot_grid_modis1km_21 = new L.geoJson(json_ilot_grid_modis1km_21, {
+        map.createPane('pane_ilot_grid_modis1km_20');
+        map.getPane('pane_ilot_grid_modis1km_20').style.zIndex = 420;
+        map.getPane('pane_ilot_grid_modis1km_20').style['mix-blend-mode'] = 'normal';
+        var layer_ilot_grid_modis1km_20 = new L.geoJson(json_ilot_grid_modis1km_20, {
             attribution: '',
             interactive: false,
-            dataVar: 'json_ilot_grid_modis1km_21',
-            layerName: 'layer_ilot_grid_modis1km_21',
-            pane: 'pane_ilot_grid_modis1km_21',
-            onEachFeature: pop_ilot_grid_modis1km_21,
-            style: style_ilot_grid_modis1km_21_0,
+            dataVar: 'json_ilot_grid_modis1km_20',
+            layerName: 'layer_ilot_grid_modis1km_20',
+            pane: 'pane_ilot_grid_modis1km_20',
+            onEachFeature: pop_ilot_grid_modis1km_20,
+            style: style_ilot_grid_modis1km_20_0,
         });
-        bounds_group.addLayer(layer_ilot_grid_modis1km_21);
-        map.addLayer(layer_ilot_grid_modis1km_21);
-        function pop_ilot_centroides_22(feature, layer) {
+        bounds_group.addLayer(layer_ilot_grid_modis1km_20);
+        map.addLayer(layer_ilot_grid_modis1km_20);
+        function pop_ilot_centroides_21(feature, layer) {
             var popupContent = '<table>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
@@ -2746,9 +2731,9 @@
 			layer.bindPopup(content, { maxHeight: 400 });
         }
 
-        function style_ilot_centroides_22_0() {
+        function style_ilot_centroides_21_0() {
             return {
-                pane: 'pane_ilot_centroides_22',
+                pane: 'pane_ilot_centroides_21',
                 radius: 4.0,
                 opacity: 1,
                 color: 'rgba(35,35,35,1.0)',
@@ -2762,37 +2747,36 @@
                 interactive: false,
             }
         }
-        map.createPane('pane_ilot_centroides_22');
-        map.getPane('pane_ilot_centroides_22').style.zIndex = 422;
-        map.getPane('pane_ilot_centroides_22').style['mix-blend-mode'] = 'normal';
-        var layer_ilot_centroides_22 = new L.geoJson(json_ilot_centroides_22, {
+        map.createPane('pane_ilot_centroides_21');
+        map.getPane('pane_ilot_centroides_21').style.zIndex = 421;
+        map.getPane('pane_ilot_centroides_21').style['mix-blend-mode'] = 'normal';
+        var layer_ilot_centroides_21 = new L.geoJson(json_ilot_centroides_21, {
             attribution: '',
             interactive: false,
-            dataVar: 'json_ilot_centroides_22',
-            layerName: 'layer_ilot_centroides_22',
-            pane: 'pane_ilot_centroides_22',
-            onEachFeature: pop_ilot_centroides_22,
+            dataVar: 'json_ilot_centroides_21',
+            layerName: 'layer_ilot_centroides_21',
+            pane: 'pane_ilot_centroides_21',
+            onEachFeature: pop_ilot_centroides_21,
             pointToLayer: function (feature, latlng) {
                 var context = {
                     feature: feature,
                     variables: {}
                 };
-                return L.circleMarker(latlng, style_ilot_centroides_22_0(feature));
+                return L.circleMarker(latlng, style_ilot_centroides_21_0(feature));
             },
         });
-        bounds_group.addLayer(layer_ilot_centroides_22);
-        map.addLayer(layer_ilot_centroides_22);
+        bounds_group.addLayer(layer_ilot_centroides_21);
+        map.addLayer(layer_ilot_centroides_21);
         var overlaysTree = [
         {label: '<b>ilots_ecovitivert</b>', collapsed: true, selectAllCheckbox: true, children: [
-            {label: '<img src="legend/ilot_centroides_22.png" /> ilot_centroides', layer: layer_ilot_centroides_22},
-            {label: '<img src="legend/ilot_grid_modis1km_21.png" /> ilot_grid_modis1km', layer: layer_ilot_grid_modis1km_21},
-            {label: '<img src="legend/ilots_polygone_20.png" /> ilots_polygone', layer: layer_ilots_polygone_20},]},
-        {label: '<b>Situation</b>', collapsed: true, selectAllCheckbox: true, children: [
-            {label: '<img src="legend/Contour_Armagnac_19.png" /> Contour_Armagnac', layer: layer_Contour_Armagnac_19},
-            {label: '<img src="legend/grid_MODIS_1km_Armagnac_2154_18.png" /> grid_MODIS_1km_Armagnac_2154', layer: layer_grid_MODIS_1km_Armagnac_2154_18},
-            {label: "Photographies aériennes historiques 1965-1980", layer: layer_Photographiesarienneshistoriques19651980_17},
-            {label: "Photographies aériennes historiques 1980-1995", layer: layer_Photographiesarienneshistoriques19801995_16},]},
-        {label: '<b>Topo</b>',  selectAllCheckbox: true, children: [
+            {label: '<img src="legend/ilot_centroides_21.png" /> ilot_centroides', layer: layer_ilot_centroides_21},
+            {label: '<img src="legend/ilot_grid_modis1km_20.png" /> ilot_grid_modis1km', layer: layer_ilot_grid_modis1km_20},
+            {label: '<img src="legend/ilots_polygone_19.png" /> ilots_polygone', layer: layer_ilots_polygone_19},]},
+        {label: '<b>Situation</b>',  selectAllCheckbox: true, children: [
+            {label: '<img src="legend/Contour_Armagnac_18.png" /> Contour_Armagnac', layer: layer_Contour_Armagnac_18},
+            {label: '<img src="legend/grid_MODIS_1km_Armagnac_2154_17.png" /> grid_MODIS_1km_Armagnac_2154', layer: layer_grid_MODIS_1km_Armagnac_2154_17},
+            {label: "Photographies aériennes historiques 1965-1980", layer: layer_Photographiesarienneshistoriques19651980_16},]},
+        {label: '<b>Topo</b>', collapsed: true, selectAllCheckbox: true, children: [
             {label: 'slope_mean<br /><table><tr><td style="text-align: center;"><img src="legend/slope_mean_15_010.png" /></td><td>0 - 1</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_121.png" /></td><td>1 - 2</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_232.png" /></td><td>2 - 3</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_343.png" /></td><td>3 - 4</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_454.png" /></td><td>4 - 5</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_565.png" /></td><td>5 - 6</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_676.png" /></td><td>6 - 7</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_787.png" /></td><td>7 - 8</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_898.png" /></td><td>8 - 9</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_9109.png" /></td><td>9 - 10</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_101110.png" /></td><td>10 - 11</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_111211.png" /></td><td>11 - 12</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_121312.png" /></td><td>12 - 13</td></tr><tr><td style="text-align: center;"><img src="legend/slope_mean_15_131413.png" /></td><td>13 - 14</td></tr></table>', layer: layer_slope_mean_15},
             {label: 'alt_mean<br /><table><tr><td style="text-align: center;"><img src="legend/alt_mean_14_4868920.png" /></td><td>48.6 - 89.2</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_89210121.png" /></td><td>89.2 - 101.2</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_10121102.png" /></td><td>101.2 - 110</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_11011743.png" /></td><td>110 - 117.4</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_117412454.png" /></td><td>117.4 - 124.5</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_124513115.png" /></td><td>124.5 - 131.1</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_13111386.png" /></td><td>131.1 - 138</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_13814457.png" /></td><td>138 - 144.5</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_144515078.png" /></td><td>144.5 - 150.7</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_150715779.png" /></td><td>150.7 - 157.7</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1577166310.png" /></td><td>157.7 - 166.3</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1663178111.png" /></td><td>166.3 - 178.1</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1781189812.png" /></td><td>178.1 - 189.8</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_1898207213.png" /></td><td>189.8 - 207.2</td></tr><tr><td style="text-align: center;"><img src="legend/alt_mean_14_2072268114.png" /></td><td>207.2 - 268.1</td></tr></table>', layer: layer_alt_mean_14},
             {label: 'eastness_mean<br /><table><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_07702680.png" /></td><td>-0.77 - -0.268</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_026801681.png" /></td><td>-0.268 - -0.168</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_016800832.png" /></td><td>-0.168 - -0.083</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_008300083.png" /></td><td>-0.083 - 0.008</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_000801044.png" /></td><td>0.008 - 0.104</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_010402035.png" /></td><td>0.104 - 0.203</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_020303136.png" /></td><td>0.203 - 0.313</td></tr><tr><td style="text-align: center;"><img src="legend/eastness_mean_13_031307947.png" /></td><td>0.313 - 0.794</td></tr></table>', layer: layer_eastness_mean_13},
